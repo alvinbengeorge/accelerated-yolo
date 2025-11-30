@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hailo Inference Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #preview-container {
+            margin-top: 20px;
+            min-height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #ccc;
+            position: relative;
+        }
+        img {
+            max-width: 100%;
+            max-height: 600px;
+            display: none;
+        }
+        .loading {
+            position: absolute;
+            display: none;
+            font-weight: bold;
+            color: #666;
+        }
+        button {
+            background-color: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hailo Object Detection</h1>
+        <p>Upload an image to run inference on the Hailo accelerator.</p>
+        
+        <input type="file" id="imageInput" accept="image/*">
+        <br>
+        <button id="uploadBtn" onclick="uploadImage()">Run Inference</button>
+
+        <div id="preview-container">
+            <span class="loading">Processing...</span>
+            <img id="resultImage" alt="Inference Result">
+        </div>
+    </div>
+
+    <script>
+        async function uploadImage() {
+            const input = document.getElementById('imageInput');
+            const resultImg = document.getElementById('resultImage');
+            const loading = document.querySelector('.loading');
+            const btn = document.getElementById('uploadBtn');
+
+            if (!input.files || !input.files[0]) {
+                alert('Please select an image first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', input.files[0]);
+
+            // Reset UI
+            resultImg.style.display = 'none';
+            loading.style.display = 'block';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/predict/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                resultImg.onload = () => {
+                    loading.style.display = 'none';
+                    resultImg.style.display = 'block';
+                    btn.disabled = false;
+                };
+                resultImg.src = imageUrl;
+
+            } catch (error) {
+                console.error(error);
+                loading.innerText = 'Error processing image';
+                loading.style.display = 'block';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -5,3 +5,6 @@ pytest
 pytest-timeout
 pytest-mock
 python-dotenv
+fastapi
+uvicorn[standard]
+hailo-platform
